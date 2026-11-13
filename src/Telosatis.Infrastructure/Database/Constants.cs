@@ -7,7 +7,7 @@ internal static class Constants
     private const string SqliteDatabaseName = "database.sqlite";
     
     public static readonly string SqliteDatabaseProductionPath =
-        Path.Join("/tmp/telosatis/var/lib/telosatis", SqliteDatabaseName);
+        Path.Join("/var/lib/telosatis", SqliteDatabaseName);
 
     public static readonly string SqliteDatabaseDevelopmentPath =
         Path.Join(AppDomain.CurrentDomain.BaseDirectory, SqliteDatabaseName);

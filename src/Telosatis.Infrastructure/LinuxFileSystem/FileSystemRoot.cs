@@ -2,7 +2,7 @@ namespace Telosatis.Infrastructure.LinuxFileSystem;
 
 internal static class FileSystemRoot
 {
-    public const string RootPath = "/tmp/telosatis/data";
+    public const string RootPath = "/data";
     
     public static bool EnsureRootPath()
     {
