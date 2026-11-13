@@ -1,0 +1,40 @@
+<!--
+  Builds the Angular app (Telosatis.Web) on `dotnet publish` and puts it into wwwroot of the publish output.
+  Lives in src/Telosatis.Api/. Add at the end of Telosatis.Api.csproj (inside <Project>):
+
+      <Import Project="WebApp.targets" />
+
+  Switches:
+    dotnet publish                           → npm ci + ng build, files included (full app)
+    dotnet publish -p:SkipWebAppBuild=true   → no npm, use the existing dist (Docker: built in the node stage)
+    dotnet publish -p:IncludeWebApp=false    → API only, no Angular files
+-->
+<Project>
+  <PropertyGroup>
+    <WebAppRoot>$(MSBuildThisFileDirectory)../Telosatis.Web/</WebAppRoot>
+    <WebAppDistDir>$(WebAppRoot)dist/browser/</WebAppDistDir>
+    <IncludeWebApp Condition="'$(IncludeWebApp)' == ''">true</IncludeWebApp>
+    <SkipWebAppBuild Condition="'$(SkipWebAppBuild)' == ''">false</SkipWebAppBuild>
+
+    <SpaRoot>$(WebAppRoot)</SpaRoot>
+    <SpaProxyServerUrl>http://localhost:4200</SpaProxyServerUrl>
+    <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
+  </PropertyGroup>
+
+  <Target Name="PublishWebApp" AfterTargets="ComputeFilesToPublish" Condition="'$(IncludeWebApp)' == 'true'">
+    <Exec Condition="'$(SkipWebAppBuild)' != 'true'" WorkingDirectory="$(WebAppRoot)" Command="npm ci" />
+    <Exec Condition="'$(SkipWebAppBuild)' != 'true'" WorkingDirectory="$(WebAppRoot)" Command="npm run build" />
+
+    <Error Condition="!Exists('$(WebAppDistDir)index.html')"
+           Text="Angular build output not found in '$(WebAppDistDir)'. Set &quot;outputPath&quot;: &quot;dist&quot; in angular.json, or build the app first." />
+
+    <ItemGroup>
+      <WebAppDistFiles Include="$(WebAppDistDir)**" />
+      <ResolvedFileToPublish Include="@(WebAppDistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot/%(WebAppDistFiles.RecursiveDir)%(WebAppDistFiles.Filename)%(WebAppDistFiles.Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>
