@@ -27,9 +27,10 @@ public sealed class TokensController(ISender sender) : BaseController
             body.ExpiresAt);
 
         var result = await sender.Send(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess 
+            ? OkFromResult(result)
+            : BadRequestFromError<TokenCreatedDto>(result.Error);
     }
 
     [HttpDelete("{tokenId:guid}")]
@@ -40,15 +41,16 @@ public sealed class TokensController(ISender sender) : BaseController
         var command = new DeleteTokenCommand(tokenId);
         
         var result = await sender.Send(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess
+            ? OkFromResult(result)
+            : BadRequestFromError<Guid>(result.Error);
     }
     
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<TokenDto>>>> ListTokens(
-        [FromQuery] ListTokensOrderKey? orderKey,
-        [FromQuery] bool? orderDescending,
+        [FromQuery(Name = "k")] ListTokensOrderKey? orderKey,
+        [FromQuery(Name = "d")] bool? orderDescending,
         CancellationToken cancellationToken)
     {
         var query = new ListTokensQuery(
@@ -56,9 +58,10 @@ public sealed class TokensController(ISender sender) : BaseController
             orderDescending);
         
         var result = await sender.Send(query, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess
+            ? OkFromResult(result)
+            : BadRequestFromError<IReadOnlyList<TokenDto>>(result.Error);
     }
     
     [AllowAnonymous]
@@ -70,9 +73,10 @@ public sealed class TokensController(ISender sender) : BaseController
         var query = new IsRootAdminCreatedQuery();
         
         var result = await sender.Send(query, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess
+            ? OkFromResult(result)
+            : BadRequestFromError<TokenRootAdminCreatedDto>(result.Error);
     }
     
     [AllowAnonymous]
@@ -84,8 +88,9 @@ public sealed class TokensController(ISender sender) : BaseController
         var command = new CreateRootAdminTokenCommand();
         
         var result = await sender.Send(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess
+            ? OkFromResult(result)
+            : BadRequestFromError<TokenCreatedDto>(result.Error);
     }
 }

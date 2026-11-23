@@ -7,4 +7,4 @@ public sealed record TokenDto(
     string Name,
     TokenRoleType RoleType,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ExpireAt);
+    DateTimeOffset? ExpiresAt);

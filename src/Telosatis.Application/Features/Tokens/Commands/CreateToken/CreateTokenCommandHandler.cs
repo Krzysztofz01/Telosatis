@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Telosatis.Application.Abstractions;
 using Telosatis.Application.Features.Tokens.Contracts;
-using Telosatis.Application.Services;
 using Telosatis.Application.Services.Abstractions;
 using Telosatis.Common;
 using Telosatis.Domain.Token;

@@ -24,9 +24,10 @@ public sealed class AuthController(ISender sender) : BaseController
         var command = new AuthenticateCommand(body.Secret);
         
         var result = await sender.Send(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess 
+            ? OkFromResult(result)
+            : BadRequestFromError<AuthenticatedDto>(result.Error);
     }
     
     [HttpPost("re")]
@@ -41,8 +42,9 @@ public sealed class AuthController(ISender sender) : BaseController
         var command = new ReauthenticateCommand(tokenId);
         
         var result = await sender.Send(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess
+            ? OkFromResult(result)
+            : BadRequestFromError<AuthenticatedDto>(result.Error);
     }
 }

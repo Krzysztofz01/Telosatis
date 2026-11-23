@@ -21,7 +21,7 @@ public sealed class FilesController(ISender sender) : BaseController
     [LargeFileTransfer]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<ApiResponse<FileInfoDto>>> UploadFile(
-        [FromQuery] string? directoryPath,
+        [FromQuery(Name = "p")] string? directoryPath,
         IFormFile file,
         [FromHeader(Name = "X-Checksum-SHA256")] string checksum, 
         CancellationToken cancellationToken)
@@ -35,23 +35,24 @@ public sealed class FilesController(ISender sender) : BaseController
             content);
 
         var result = await sender.Send(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
-
-        return Ok(result.Value);
+        
+        return result.IsSuccess
+            ? OkFromResult(result)
+            : BadRequestFromError<FileInfoDto>(result.Error);
     }
 
     [HttpDelete]
     public async Task<IActionResult> DeleteFile(
-        [FromQuery] string? filePath,
+        [FromQuery(Name = "p")] string? filePath,
         CancellationToken cancellationToken)
     {
         var command = new DeleteFileCommand(filePath ?? string.Empty);
 
         var result = await sender.Send(command, cancellationToken);
         if (result.IsFailure)
-            return result.Error is NotFoundError
-                ? NotFound(result.Error)
-                : BadRequest(result.Error);
+            return result.Error is NotFoundError notFoundError
+                ? NotFoundFromError(notFoundError)
+                : BadRequestFromError(result.Error);
 
         return NoContent();
     }
@@ -67,46 +68,47 @@ public sealed class FilesController(ISender sender) : BaseController
 
         var result = await sender.Send(command, cancellationToken); 
         if (result.IsFailure)
-            return result.Error is NotFoundError
-                ? NotFound(result.Error)
-                : BadRequest(result.Error);
+            return result.Error is NotFoundError notFoundError
+                ? NotFoundFromError<FileInfoDto>(notFoundError)
+                : BadRequestFromError<FileInfoDto>(result.Error);
 
-        return Ok(result.Value);
+        return OkFromResult(result);
     }
    
     [HttpPost("directory")]
     public async Task<ActionResult<ApiResponse<FileInfoDto>>> CreateDirectory(
-        [FromQuery] string? directoryPath,
+        [FromQuery(Name = "p")] string? directoryPath,
         CancellationToken cancellationToken)
     {
         var command = new CreateDirectoryCommand(directoryPath ?? string.Empty);
 
         var result = await sender.Send(command, cancellationToken);
-        if (result.IsFailure) return BadRequest(result.Error);
 
-        return Ok(result.Value);
+        return result.IsSuccess
+            ? OkFromResult(result)
+            : BadRequestFromError<FileInfoDto>(result.Error);
     }
 
     [HttpGet("download")]
     [ProducesResponseType(typeof(FileResult), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> DownloadFile(
-        [FromQuery] string? filePath,
+        [FromQuery(Name = "p")] string? filePath,
         CancellationToken cancellationToken)
     {
         var query = new DownloadFileQuery(filePath ?? string.Empty);
 
         var result = await sender.Send(query, cancellationToken);
         if (result.IsFailure)
-            return result.Error is NotFoundError
-                ? NotFound(result.Error)
-                : BadRequest(result.Error);
+            return result.Error is NotFoundError notFoundError
+                ? NotFoundFromError(notFoundError)
+                : BadRequestFromError(result.Error);
 
-        return File(result.Value);
+        return FileFromResult(result);
     }
 
     [HttpGet]
-    public async Task<object> ListDirectory(
-        [FromQuery] string? directoryPath,
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<FileInfoDto>>>> ListDirectory(
+        [FromQuery(Name = "p")] string? directoryPath,
         [FromQuery(Name = "k")] ListDirectoryOrderKey? orderKey,
         [FromQuery(Name = "d")] bool? orderDescending, 
         CancellationToken cancellationToken)
@@ -118,10 +120,10 @@ public sealed class FilesController(ISender sender) : BaseController
 
         var result = await sender.Send(query, cancellationToken);
         if (result.IsFailure)
-            return result.Error is NotFoundError
-                ? NotFound(result.Error)
-                : BadRequest(result.Error);
+            return result.Error is NotFoundError notFoundError
+                ? NotFoundFromError<IReadOnlyList<FileInfoDto>>(notFoundError)
+                : BadRequestFromError<IReadOnlyList<FileInfoDto>>(result.Error);
 
-        return Ok(result.Value);
+        return Ok(result);
     }
 }
