@@ -1,0 +1,1 @@
+export const SHA256_CHECKSUM_HEADER = 'X-Checksum-SHA256';
