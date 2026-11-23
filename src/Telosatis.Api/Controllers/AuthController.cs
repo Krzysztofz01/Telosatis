@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Telosatis.Api.Contracts;
+using Telosatis.Api.Extensions;
 using Telosatis.Api.RateLimiting;
 using Telosatis.Application.Features.Authentication.Commands.Authenticate;
 using Telosatis.Application.Features.Authentication.Commands.Reauthenticate;
@@ -12,7 +13,7 @@ using Telosatis.Application.Features.Authentication.Contracts;
 namespace Telosatis.Api.Controllers;
 
 [Route("api/auth")]
-public sealed class AuthController(ISender sender) : BaseController
+public sealed class AuthController(ISender sender, ILogger<AuthController> logger) : BaseController
 {
     [AllowAnonymous]
     [EnableRateLimiting(RateLimitingPolicies.Authentication)]
@@ -24,10 +25,16 @@ public sealed class AuthController(ISender sender) : BaseController
         var command = new AuthenticateCommand(body.Secret);
         
         var result = await sender.Send(command, cancellationToken);
-        
-        return result.IsSuccess 
-            ? OkFromResult(result)
-            : BadRequestFromError<AuthenticatedDto>(result.Error);
+        if (result.IsFailure)
+        {
+            logger.LogInformation("Authentication failed for request from: {IpAddress} with error: {@Error}",
+                HttpContext.ResolveIpAddress(),
+                result.Error);
+            
+            return BadRequestFromError<AuthenticatedDto>(Errors.AuthenticationFailed);
+        }
+
+        return OkFromResult(result);
     }
     
     [HttpPost("re")]

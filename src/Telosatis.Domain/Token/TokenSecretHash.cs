@@ -29,7 +29,7 @@ public sealed class TokenSecretHash : ValueObject<TokenSecretHash>
         var secretHash = BuildSecretHash(secret);
 
         if (secretHash.Length != HashLength)
-            return Errors.TokenSecretHashLengthMissmatch;
+            return Errors.TokenSecretHashLengthMismatch;
         
         var tokenSecretHash = new TokenSecretHash(secretHash);
         return new TokenSecret(tokenSecretHash, secret);
@@ -45,7 +45,7 @@ public sealed class TokenSecretHash : ValueObject<TokenSecretHash>
         var tokenSecretHash = new TokenSecretHash(secretHash);
         
         if (secretHash.Length != HashLength)
-            return Errors.TokenSecretHashLengthMissmatch;
+            return Errors.TokenSecretHashLengthMismatch;
         
         return new TokenSecret(tokenSecretHash, secret);
     }

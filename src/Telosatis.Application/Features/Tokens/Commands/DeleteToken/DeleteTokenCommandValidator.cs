@@ -9,6 +9,6 @@ public sealed class DeleteTokenCommandValidator : AbstractValidator<DeleteTokenC
     {
         RuleFor(x => x.TokenId)
             .IsGuidId()
-            .WithError(Errors.TokeIdCanNotBeEmpty);
+            .WithError(Errors.TokenIdCanNotBeEmpty);
     }    
 }

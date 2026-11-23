@@ -56,6 +56,9 @@ public sealed class Token : Entity
         if (expiresAtResult.IsFailure)
             return expiresAtResult.Error;
 
+        if (roleResult.Value.Value == TokenRoleType.RootAdmin && expiresAtResult.Value == TokenExpiresAt.WithoutExpiration.Value)
+            return Errors.TokenWithRootAdminRoleMustNotExpire;
+        
         var tokenSecretResult = TokenSecretHash.Create(now);
         if (tokenSecretResult.IsFailure)
             return tokenSecretResult.Error;

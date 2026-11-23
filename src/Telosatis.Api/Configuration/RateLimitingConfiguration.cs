@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading.RateLimiting;
 using Telosatis.Api.Contracts;
+using Telosatis.Api.Extensions;
 using Telosatis.Api.RateLimiting;
 
 namespace Telosatis.Api.Configuration;
@@ -61,23 +61,5 @@ internal static class RateLimitingConfiguration
     }
 
     private static string GetClientKey(string policy, HttpContext httpContext) =>
-        $"{policy}:{ResolveIpAddress(httpContext)}";
-    
-    private static string ResolveIpAddress(HttpContext httpContext)
-    {
-        var ip = httpContext.Connection.RemoteIpAddress;
-        if (ip is null) return string.Empty;
-
-        if (ip.IsIPv4MappedToIPv6)
-            ip = ip.MapToIPv4();
-
-        if (ip.AddressFamily == AddressFamily.InterNetworkV6)
-        {
-            var addressBytes = ip.GetAddressBytes();
-            Array.Clear(addressBytes, 8, 8);
-            return $"{new IPAddress(addressBytes)}/64";
-        }
-
-        return ip.ToString();
-    }
+        $"{policy}:{httpContext.ResolveIpAddress()}";
 }
